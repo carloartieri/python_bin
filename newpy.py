@@ -8,6 +8,9 @@
 ##############################
 #2015.04.02 - Updated script to use argparse and added option to exclude local-specific 
 #			  module imports
+#2015.04.10 - Added default import of subprocess and fixed how argparse commands were being
+#			  printed.
+#
 
 ###########
 # MODULES #
@@ -71,6 +74,7 @@ import argparse		#Access to long command-line parsing
 import datetime		#Access to calendar/clock functions
 import re			#Access to REGEX splitting
 import math			#Access to math functions
+import subprocess	#Access to shell commands
 import random		#Access to random number generator\n""" + local + """
 
 ##########################
@@ -79,12 +83,12 @@ import random		#Access to random number generator\n""" + local + """
 
 parser = argparse.ArgumentParser(description='Zip tables together.', add_help=False)
 req = parser.add_argument_group('Required arguments:')
-req.add_argument('-i','--infile', action="store", dest="infile", help='Input table', required=True, metavar='')
-req.add_argument('-o','--outfile', action="store", dest="outfile", help='Zipped output table', required=True, metavar='')
-#req.add_argument('-c','--cols', action="store", dest="colstep", help='1-based start column and step', nargs=2, required=True, metavar=('COL','STEP'))
+req.add_argument('-i','--infile', action='store', dest='infile', help='Input table', required=True, metavar='')
+req.add_argument('-o','--outfile', action='store', dest='outfile', help='Zipped output table', required=True, metavar='')
+#req.add_argument('-c','--cols', action='store', dest='colstep', help='1-based start column and step', nargs=2, required=True, metavar=('COL','STEP'))
 opt = parser.add_argument_group('Optional arguments:')
-#opt.add_argument('-s','--sep', action="store", dest="sep", help='Column seperator [default: \'\\t\']', default='\\t', metavar='')
-opt.add_argument("-h", "--help", action="help", help="show this help message and exit")
+#opt.add_argument('-s','--sep', action='store', dest='sep', help='Column seperator [default: '\\t']', default='\\t', metavar='')
+opt.add_argument('-h', '--help', action='help', help='show this help message and exit')
 args = parser.parse_args()
 
 #############

@@ -23,7 +23,7 @@ import datetime		#Access to calendar/clock functions
 import re			#Access to REGEX splitting
 import math			#Access to math functions
 import random		#Access to random number generator
-import subprocess
+import subprocess	#Access to external shell commands
 #import common		#My custom common python scripts
 
 ##########################
