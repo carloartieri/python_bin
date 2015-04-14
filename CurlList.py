@@ -42,6 +42,9 @@ files have been successfully downloaded. Note that if the same command is rerun 
 have completed downloading, they will resume from their current position (curl option '-C -').
 
 More detailed description of options follows:
+-i/--inlist
+	A list of files to download, one on each line. Note that the script will ignore lines 
+	beginning with '#'.
 -c/--concurrent 
 	The number of concurrent shell scripts to execute.
 -d/--dest
@@ -71,7 +74,6 @@ args = parser.parse_args()
 ##########
 
 #If the destination folder has a trailing slash, axe it.
-print args.dest + ' ',
 if args.dest[-1] == '/':
 	args.dest = args.dest[:-1]
 
