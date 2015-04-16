@@ -10,6 +10,8 @@
 #			- Modified method I was previously using to extract sequences so that this is much 
 #			  more efficient with large mammalian genomes.
 #			- Tested on GFF and works
+#2015.04.13	- Bug causing first exon skipping, fixed.
+#2015.04.15 - Added in command to skip empty lines in GFF
 
 ###########
 # MODULES #
@@ -31,18 +33,15 @@ epilog = """\
 This script takes an annotation file in GFF or GTF format as well as a genomic sequence in 
 FASTA format, and produces a new fasta file containining the the spliced (if appropriate) 
 annotation features. The user should specify the annotation feature (default: exon) and 
-identifier (default: gene) to pull out of large GFF/GTFs. Three points of interest:
+identifier (default: gene) to pull out of large GFF/GTFs. Two points of interest:
 
-1. The script must load the entire genome into memory, which can take both time and a lot of 
-RAM for large genomes.
-
-2. It recognizes GFF/GTFs based on their info column (column 9) and expects the following 
+1. The script recognizes GFF/GTFs based on their info column (column 9) and expects the following 
 format: 
 
 GFF: identifier=feature;
 GTF: identifier "feature";
 
-3. An error will be printed identifying each feature line that doesn't contain the specified
+4. An error will be printed identifying each feature line that doesn't contain the specified
 identifier.
 	
 """
@@ -55,8 +54,8 @@ req.add_argument('-g','--gff', action='store', dest='gff', help='Annotation file
 req.add_argument('-f','--fasta', action='store', dest='fasta', help='Genome file in FASTA format', required=True, metavar='')
 req.add_argument('-o','--outfile', action='store', dest='outfile', help='Output file in FASTA format', required=True, metavar='')
 opt = parser.add_argument_group('Optional arguments:')
-opt.add_argument('-e','--feature', action='store', dest='feature', help='The annotation feature of interest (default: exon)', default='exon', metavar='')
-opt.add_argument('-i','--identifier', action='store', dest='id', help='The column 8 identifier of interest (default: gene)', default='gene', metavar='')
+opt.add_argument('-e','--feature', action='store', dest='feature', help='The annotation feature of interest', default='exon', metavar='')
+opt.add_argument('-i','--identifier', action='store', dest='id', help='The column 8 identifier of interest', default='gene', metavar='')
 opt.add_argument('-r','--rev', action='store_true', dest='rev', help='Reverse-transcribe annotations on the negative strand?')
 opt.add_argument('-v','--verbose', action='store_true', dest='ver', help='Print out current chromosome progress in 100 kb increments.')
 opt.add_argument('-h', '--help', action='help', help='show this help message and exit')
@@ -84,8 +83,10 @@ or_dict = {}
 gff = open(args.gff, 'r')
 line_count = 1
 for line in gff:
-	#Skip commented lines
+	#Skip commented lines and empty lines
 	if re.match('^#', line):
+		continue
+	if not line.strip():
 		continue
 
 	line = line.rstrip('\n')
@@ -116,6 +117,8 @@ for line in gff:
 						start_dict[line_t[0]][start].append(type_split[1])
 				else:
 					start_dict[line_t[0]] = {}
+					start_dict[line_t[0]][start] = []
+					start_dict[line_t[0]][start].append(type_split[1])
 
 				if line_t[0] in stop_dict:
 					if stop in stop_dict[line_t[0]]:
@@ -125,13 +128,14 @@ for line in gff:
 						stop_dict[line_t[0]][stop].append(type_split[1])
 				else:
 					stop_dict[line_t[0]] = {}
+					stop_dict[line_t[0]][stop] = []
+					stop_dict[line_t[0]][stop].append(type_split[1])
 
 	elif gtf_type in line_t[8]:
 		line_t8_split = line_t[8].split(';')
 		for i in line_t8_split:
 			if gtf_type in i:
 				type_split = i.split('"')
-				type_split[1] = type_split[1].strip()
 				start = int(line_t[3])-1
 				stop = int(line_t[4])-1
 				or_dict[type_split[1]] = line_t[6]
@@ -143,6 +147,8 @@ for line in gff:
 						start_dict[line_t[0]][start].append(type_split[1])
 				else:
 					start_dict[line_t[0]] = {}
+					start_dict[line_t[0]][start] = []
+					start_dict[line_t[0]][start].append(type_split[1])
 
 				if line_t[0] in stop_dict:
 					if stop in stop_dict[line_t[0]]:
@@ -152,6 +158,8 @@ for line in gff:
 						stop_dict[line_t[0]][stop].append(type_split[1])
 				else:
 					stop_dict[line_t[0]] = {}
+					stop_dict[line_t[0]][stop] = []
+					stop_dict[line_t[0]][stop].append(type_split[1])
 	else:
 		print str(args.gff) + ' ' + str(line_count) + ' missing identifier ' + str(args.id)
 
@@ -173,27 +181,27 @@ for line in genome:
 		started_features = []
 	else:
 		#Here's where we have to go through nucs one-by-one.
+		if curr_chr in start_dict:
+			for i in line:
+				if nuc_count in start_dict[curr_chr]:
+					 for j in start_dict[curr_chr][nuc_count]:
+					 	started_features.append(j)
 
-		for i in line:
-			if nuc_count in start_dict[curr_chr]:
-				 for j in start_dict[curr_chr][nuc_count]:
-				 	started_features.append(j)
+				if not started_features:
+					pass
+				else:
+					for feat in started_features:
+						if feat in out_fasta_dict:
+							out_fasta_dict[feat] = out_fasta_dict[feat] + i
+						else:
+							out_fasta_dict[feat] = i
 
-			if not started_features:
-				pass
-			else:
-				for feat in started_features:
-					if feat in out_fasta_dict:
-						out_fasta_dict[feat] = out_fasta_dict[feat] + i
-					else:
-						out_fasta_dict[feat] = i
-
-			if nuc_count in stop_dict[curr_chr]:
-				for j in stop_dict[curr_chr][nuc_count]:
-				 	started_features.remove(j)
-			nuc_count += 1
-			if nuc_count % 100000 == 0 and args.ver is True:
-				print str(curr_chr) + ' ' + str(nuc_count) + ' bp done.'
+				if nuc_count in stop_dict[curr_chr]:
+					for j in stop_dict[curr_chr][nuc_count]:
+					 	started_features.remove(j)
+				nuc_count += 1
+				if nuc_count % 1000000 == 0 and args.ver is True:
+					print str(curr_chr) + ' ' + str(nuc_count) + ' bp done.'
 genome.close()
 
 #Now output the appropriate FASTA file.
