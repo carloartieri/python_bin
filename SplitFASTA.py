@@ -7,6 +7,7 @@
 # HISTORY AND THINGS TO FIX  #
 ##############################
 #2015.04.28 - Initial script
+#			- Script tested on hg19, works.
 
 ###########
 # MODULES #
@@ -58,14 +59,14 @@ for line in infasta:
 		line_split = line.split(' ')
 		header = line_split[0].translate(None, '>')
 		outfile = open(str(args.outloc) + '/' + str(header) + '.fasta', 'w')
-		outfile.write('>' + str(line) + '\n')
+		outfile.write(str(line) + '\n')
 		first = 0
 	elif re.match('^>', line) and first == 0:
 		outfile.close()
 		line_split = line.split(' ')
 		header = line_split[0].translate(None, '>')
 		outfile = open(str(args.outloc) + '/' + str(header) + '.fasta', 'w')
-		outfile.write('>' + str(line) + '\n')
+		outfile.write(str(line) + '\n')
 		first = 0
 	else:
 		outfile.write(str(line) + '\n')
