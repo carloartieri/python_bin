@@ -38,24 +38,44 @@ def print_ansi(text, color, bold=False, under=False):
     
     
 #Convert a FASTA file to a dictionary where keys = headers and values are the sequence
-#Usage: dict = fasta_to_dic(FILE):
-def fasta_to_dic(file):
+#Usage: dict = fasta_to_dict(FILE):
+def fasta_to_dict(file):
 
-	fasta_file = open(file, "r")	#Open the file for reading
-	fasta_dic = {}
-	
-	for line in fasta_file:
-		line = line.rstrip('\n')
-		if re.match('^>', line):
-			line_split = line.split(' ')	#By default keeps only first word of the header.
-			header = line_split[0].translate(None, '>')
-			fasta_dic[header] = ''
-		else:
-			fasta_dic[header] += line	
-	
-	fasta_file.close()
-	
-	return fasta_dic
+    fasta_file = open(file, "r")    #Open the file for reading
+    fasta_dic = {}
+    
+    for line in fasta_file:
+        line = line.rstrip('\n')
+        if re.match('^>', line):
+            line_split = line.split(' ')    #By default keeps only first word of the header.
+            header = line_split[0].translate(None, '>')
+            fasta_dic[header] = ''
+        else:
+            fasta_dic[header] += line   
+    
+    fasta_file.close()
+    
+    return fasta_dic
+
+#Splits a CIGAR string into two lists where the one letter type and numerical value are in
+#the same order as found in the string.
+#Usage: cigar_types,cigar_vals = split_CIGAR(<CIGAR>)
+def split_CIGAR(cigar):
+
+    cig_types_tmp = re.split('[0-9]',cigar)
+    cig_vals_tmp = re.split('[MIDNSHP\=X]',cigar)
+    cig_types = []
+    cig_vals = []
+
+    for i in cig_types_tmp:
+        if i != '':
+            cig_types.append(i)
+
+    for i in cig_vals_tmp:
+        if i != '':
+            cig_vals.append(i)
+        
+    return cig_types,cig_vals
 	
 
 #Convert a sequence to its reverse-complement. Supports 'N's, which remain 'N's.

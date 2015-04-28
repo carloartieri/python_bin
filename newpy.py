@@ -10,7 +10,7 @@
 #			  module imports
 #2015.04.10 - Added default import of subprocess and fixed how argparse commands were being
 #			  printed.
-#test
+#2015.04.16 - Added import of numpy and os modules. Tweaked output of base script.
 
 ###########
 # MODULES #
@@ -52,7 +52,8 @@ curr_date = str(now.year) + '.' + str("%02d" % (now.month,)) + '.' + str("%02d" 
 if args.dis == True:
 	local = ''
 else:	#Set local-specific module calls here
-	local = """import common		#My custom common python scripts"""
+	local = """sys.path.append('/Users/carloartieri/bin/python') #Set python path for common functions
+import common		#My custom common python scripts"""
 
 script_header = """\
 #!/usr/bin/python
@@ -69,25 +70,25 @@ script_header = """\
 # MODULES #
 ###########
 import sys			#Access to simple command-line arguments
-sys.path.append('/Users/carloartieri/bin/python') #Set python path for common functions
 import argparse		#Access to long command-line parsing	
 import datetime		#Access to calendar/clock functions
 import re			#Access to REGEX splitting
 import math			#Access to math functions
 import subprocess	#Access to shell commands
+import os			#Access to shell commands (old)
+import numpy		#Access to numerical python functions
 import random		#Access to random number generator\n""" + local + """
 
 ##########################
 # COMMAND-LINE ARGUMENTS #
 ##########################
 
-parser = argparse.ArgumentParser(description='Zip tables together.', add_help=False)
+parser = argparse.ArgumentParser(description='[PROGRAM DESCRIPTION]', add_help=False)
 req = parser.add_argument_group('Required arguments:')
 req.add_argument('-i','--infile', action='store', dest='infile', help='Input table', required=True, metavar='')
 req.add_argument('-o','--outfile', action='store', dest='outfile', help='Zipped output table', required=True, metavar='')
 #req.add_argument('-c','--cols', action='store', dest='colstep', help='1-based start column and step', nargs=2, required=True, metavar=('COL','STEP'))
 opt = parser.add_argument_group('Optional arguments:')
-#opt.add_argument('-s','--sep', action='store', dest='sep', help='Column seperator [default: '\\t']', default='\\t', metavar='')
 opt.add_argument('-h', '--help', action='help', help='show this help message and exit')
 args = parser.parse_args()
 
